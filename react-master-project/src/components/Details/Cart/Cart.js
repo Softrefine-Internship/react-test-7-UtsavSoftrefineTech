@@ -1,13 +1,43 @@
 import React from "react";
-import { Card, CardContent, Typography, List, ListItem } from "@mui/material";
+import {
+  Paper,
+  Typography,
+  List,
+  ListItem,
+  ListItemText,
+  Box,
+  Button,
+} from "@mui/material";
 
 const Cart = ({ cartData }) => {
   return (
-    <div style={{ overflowY: "auto", maxHeight: "520px" }}>
-      {cartData && cartData.length > 0 ? (
-        cartData.map((cartItem) => (
-          <Card key={cartItem.id} sx={{ border: 1, marginBottom: 2 }}>
-            <CardContent>
+    <>
+      <Box display="flex" justifyContent="space-between">
+        <Typography variant="h4" gutterBottom>
+          CARTS
+        </Typography>
+        <Button
+          sx={{
+            marginBottom: "16px",
+          }}
+          variant="contained"
+          onClick={() => alert("Add Cart")}
+        >
+          Add Cart
+        </Button>
+      </Box>
+
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          overflowY: "auto",
+          maxHeight: "520px",
+        }}
+      >
+        {cartData && cartData.length > 0 ? (
+          cartData.map((cartItem) => (
+            <Paper key={cartItem.id} elevation={3} className="m-4 p-4 mr-auto">
               <Typography variant="subtitle1">
                 <span style={{ fontWeight: "bold" }}>User ID:</span>{" "}
                 {cartItem.userId || "N/A"}
@@ -20,11 +50,15 @@ const Cart = ({ cartData }) => {
                 <span style={{ fontWeight: "bold" }}>Products:</span>
               </Typography>
               {cartItem.products && cartItem.products.length > 0 ? (
-                <List style={{ paddingLeft: 2 }}>
+                <List style={{ padding: "0px" }}>
                   {cartItem.products.map((product) => (
-                    <ListItem key={product.productId}>
-                      Product ID: {product.productId}, Quantity:{" "}
-                      {product.quantity}
+                    <ListItem
+                      key={product.productId}
+                      style={{ padding: "0px" }}
+                    >
+                      <ListItemText
+                        primary={`Product ID: ${product.productId}, Quantity: ${product.quantity}`}
+                      />
                     </ListItem>
                   ))}
                 </List>
@@ -33,13 +67,13 @@ const Cart = ({ cartData }) => {
                   No products in the cart.
                 </Typography>
               )}
-            </CardContent>
-          </Card>
-        ))
-      ) : (
-        <Typography variant="body2">No cart data available.</Typography>
-      )}
-    </div>
+            </Paper>
+          ))
+        ) : (
+          <Typography variant="body2">No cart data available.</Typography>
+        )}
+      </div>
+    </>
   );
 };
 
