@@ -11,13 +11,15 @@ import {
   DialogActions,
   Typography,
   Box,
+  CircularProgress,
 } from "@mui/material";
+
+const API_URL = "https://fakestoreapi.com/products";
 
 const Product = ({ productData }) => {
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState(""); // "add", "update"
   const [selectedProduct, setSelectedProduct] = useState(null);
-
   const [newProduct, setNewProduct] = useState({
     title: "",
     price: 0,
@@ -25,6 +27,7 @@ const Product = ({ productData }) => {
     image: "",
     category: "",
   });
+  const [loading, setLoading] = useState(false);
 
   const handleOpenDialog = (mode, product) => {
     setDialogMode(mode);
@@ -57,8 +60,9 @@ const Product = ({ productData }) => {
   };
 
   const handleAddProduct = () => {
-    // Perform API call to add the new product
-    fetch("https://fakestoreapi.com/products", {
+    setLoading(true);
+
+    fetch(API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -68,22 +72,20 @@ const Product = ({ productData }) => {
       .then((res) => res.json())
       .then((json) => {
         console.log(json);
+      })
+      .catch((error) => {
+        console.error("Error adding product:", error);
+      })
+      .finally(() => {
+        setLoading(false);
+        handleCloseDialog();
       });
-
-    setNewProduct({
-      title: "",
-      price: 0,
-      description: "",
-      image: "",
-      category: "",
-    });
-
-    handleCloseDialog();
   };
 
   const handleUpdateProduct = () => {
-    // Perform API call to update the selected product
-    fetch(`https://fakestoreapi.com/products/${selectedProduct.id}`, {
+    setLoading(true);
+
+    fetch(`${API_URL}/${selectedProduct.id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -93,20 +95,34 @@ const Product = ({ productData }) => {
       .then((res) => res.json())
       .then((json) => {
         console.log(json);
+      })
+      .catch((error) => {
+        console.error("Error updating product:", error);
+      })
+      .finally(() => {
+        setLoading(false);
+        handleCloseDialog();
       });
-    handleCloseDialog();
   };
 
-  const handleDeleteProduct = () => {
-    // Perform API call to delete the selected product
-    fetch(`https://fakestoreapi.com/products/${selectedProduct.id}`, {
+  const handleDeleteProduct = (id) => {
+    setLoading(true);
+
+    fetch(`${API_URL}/${id}`, {
       method: "DELETE",
     })
       .then((res) => res.json())
       .then((json) => {
         console.log(json);
+      })
+      .catch((error) => {
+        console.error("Error deleting product:", error);
+      })
+      .finally(() => {
+        setLoading(false);
+        handleCloseDialog();
+        alert(`Product ${id} is successfully deleted!`);
       });
-    handleCloseDialog();
   };
 
   const handleInputChange = (e) => {
@@ -132,12 +148,15 @@ const Product = ({ productData }) => {
       headerName: "Actions",
       sortable: false,
       filter: false,
-      cellRendererFramework: (params) => (
+      cellRenderer: (params) => (
         <div>
           <Button
             variant="outlined"
             size="small"
             onClick={() => handleOpenDialog("update", params.data)}
+            sx={{
+              marginRight: "8px",
+            }}
           >
             Update
           </Button>
@@ -145,7 +164,7 @@ const Product = ({ productData }) => {
             variant="outlined"
             size="small"
             color="error"
-            onClick={() => handleDeleteProduct(params.data)}
+            onClick={() => handleDeleteProduct(params.data.id)}
           >
             Delete
           </Button>
@@ -156,7 +175,7 @@ const Product = ({ productData }) => {
   ];
 
   return (
-    <div>
+    <Box>
       <Box display="flex" justifyContent="space-between">
         <Typography variant="h4" gutterBottom>
           PRODUCTS
@@ -220,11 +239,17 @@ const Product = ({ productData }) => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleCloseDialog} disabled={loading}>
+            Cancel
+          </Button>
           {dialogMode === "add" ? (
-            <Button onClick={handleAddProduct}>Add</Button>
+            <Button onClick={handleAddProduct} disabled={loading}>
+              {loading ? <CircularProgress size={20} /> : "Add"}
+            </Button>
           ) : (
-            <Button onClick={handleUpdateProduct}>Update</Button>
+            <Button onClick={handleUpdateProduct} disabled={loading}>
+              {loading ? <CircularProgress size={20} /> : "Update"}
+            </Button>
           )}
         </DialogActions>
       </Dialog>
@@ -241,7 +266,7 @@ const Product = ({ productData }) => {
           domLayout="autoHeight"
         />
       </div>
-    </div>
+    </Box>
   );
 };
 

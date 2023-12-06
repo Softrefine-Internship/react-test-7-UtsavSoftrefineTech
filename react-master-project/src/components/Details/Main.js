@@ -2,6 +2,18 @@ import React, { useState, useEffect } from "react";
 import Cart from "./Cart/Cart";
 import Product from "./Product/Product";
 import User from "./Users/Users";
+import { Box, styled, ThemeProvider, createTheme } from "@mui/material";
+
+const theme = createTheme(); // Create a default theme
+
+const StyledMain = styled(Box)(({ theme }) => ({
+  width: "80%",
+  padding: "10px",
+  [theme.breakpoints.down("sm")]: {
+    // Apply styles when screen size is less than 700px
+    width: "100%",
+  },
+}));
 
 const Main = ({ selectedMenu }) => {
   const [data, setData] = useState([]);
@@ -23,11 +35,13 @@ const Main = ({ selectedMenu }) => {
   }, [selectedMenu]);
 
   return (
-    <div className="ml-1/4 p-4 w-4/5">
-      {selectedMenu === "carts" && <Cart cartData={data} />}
-      {selectedMenu === "products" && <Product productData={data} />}
-      {selectedMenu === "users" && <User userData={data} />}
-    </div>
+    <ThemeProvider theme={theme}>
+      <StyledMain>
+        {selectedMenu === "carts" && <Cart cartData={data} />}
+        {selectedMenu === "products" && <Product productData={data} />}
+        {selectedMenu === "users" && <User userData={data} />}
+      </StyledMain>
+    </ThemeProvider>
   );
 };
 

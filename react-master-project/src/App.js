@@ -13,14 +13,16 @@ function App() {
 
   return (
     <>
-      <CssBaseline />
-      <Navbar />
-      <Box>
-        <Box display="flex">
-          <Sidebar handleMenuClick={handleMenuClick} />
-          <Main selectedMenu={selectedMenu} />
+      <div style={{ position: "relative" }}>
+        <CssBaseline />
+        <Navbar />
+        <Box>
+          <Box display="flex">
+            <Sidebar handleMenuClick={handleMenuClick} />
+            <Main selectedMenu={selectedMenu} />
+          </Box>
         </Box>
-      </Box>
+      </div>
     </>
   );
 }
