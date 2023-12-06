@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
@@ -20,40 +21,29 @@ const User = ({ userData }) => {
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState(""); // "add", "update"
   const [selectedUser, setSelectedUser] = useState(null);
-  const [newUser, setNewUser] = useState({
-    name: {
-      firstname: "",
-      lastname: "",
-    },
-    username: "",
-    email: "",
-    phone: "",
-    address: {
-      city: "",
-      street: "",
-      zipcode: "",
-    },
-  });
   const [loading, setLoading] = useState(false);
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm();
 
   const handleOpenDialog = (mode, user) => {
     setDialogMode(mode);
     setSelectedUser(user);
 
     if (mode === "update") {
-      setNewUser({
-        name: {
-          firstname: user.name.firstname,
-          lastname: user.name.lastname,
-        },
+      reset({
+        firstname: user.name.firstname,
+        lastname: user.name.lastname,
         username: user.username,
         email: user.email,
         phone: user.phone,
-        address: {
-          city: user.address.city,
-          street: user.address.street,
-          zipcode: user.address.zipcode,
-        },
+        city: user.address.city,
+        street: user.address.street,
+        zipcode: user.address.zipcode,
       });
     }
 
@@ -61,26 +51,22 @@ const User = ({ userData }) => {
   };
 
   const handleCloseDialog = () => {
-    setNewUser({
-      name: {
-        firstname: "",
-        lastname: "",
-      },
+    reset({
+      firstname: "",
+      lastname: "",
       username: "",
       email: "",
       phone: "",
-      address: {
-        city: "",
-        street: "",
-        zipcode: "",
-      },
+      city: "",
+      street: "",
+      zipcode: "",
     });
     setDialogMode("");
     setSelectedUser(null);
     setDialogOpen(false);
   };
 
-  const handleAddUser = () => {
+  const handleAddUser = (data) => {
     setLoading(true);
 
     fetch(API_URL, {
@@ -88,7 +74,7 @@ const User = ({ userData }) => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(newUser),
+      body: JSON.stringify(data),
     })
       .then((res) => res.json())
       .then((json) => {
@@ -103,7 +89,7 @@ const User = ({ userData }) => {
       });
   };
 
-  const handleUpdateUser = () => {
+  const handleUpdateUser = (data) => {
     setLoading(true);
 
     fetch(`${API_URL}/${selectedUser.id}`, {
@@ -111,7 +97,7 @@ const User = ({ userData }) => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(newUser),
+      body: JSON.stringify(data),
     })
       .then((res) => res.json())
       .then((json) => {
@@ -124,6 +110,14 @@ const User = ({ userData }) => {
         setLoading(false);
         handleCloseDialog();
       });
+  };
+
+  const onSubmit = (data) => {
+    if (dialogMode === "add") {
+      handleAddUser(data);
+    } else if (dialogMode === "update") {
+      handleUpdateUser(data);
+    }
   };
 
   const handleDeleteUser = (id) => {
@@ -144,26 +138,6 @@ const User = ({ userData }) => {
         handleCloseDialog();
         alert(`User ${id} is successfully deleted!`);
       });
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-
-    if (name.includes(".")) {
-      const [parent, child] = name.split(".");
-      setNewUser((prev) => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: value,
-        },
-      }));
-    } else {
-      setNewUser((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
   };
 
   const columnDefs = [
@@ -226,12 +200,6 @@ const User = ({ userData }) => {
     },
   ];
 
-  const defaultColDef = {
-    sortable: true,
-    resizable: true,
-    filter: true,
-  };
-
   return (
     <>
       <Box display="flex" justifyContent="space-between">
@@ -255,7 +223,6 @@ const User = ({ userData }) => {
           domLayout="autoHeight"
           pagination={true}
           paginationPageSize={5}
-          defaultColDef={defaultColDef}
         />
       </div>
 
@@ -264,85 +231,181 @@ const User = ({ userData }) => {
           {dialogMode === "add" ? "Add New User" : "Update User"}
         </DialogTitle>
         <DialogContent>
-          <TextField
-            label="First Name"
-            name="name.firstname"
-            value={newUser.name.firstname}
-            onChange={handleInputChange}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Last Name"
-            name="name.lastname"
-            value={newUser.name.lastname}
-            onChange={handleInputChange}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Username"
-            name="username"
-            value={newUser.username}
-            onChange={handleInputChange}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Email"
-            name="email"
-            value={newUser.email}
-            onChange={handleInputChange}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Phone"
-            name="phone"
-            value={newUser.phone}
-            onChange={handleInputChange}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="City"
-            name="address.city"
-            value={newUser.address.city}
-            onChange={handleInputChange}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Street"
-            name="address.street"
-            value={newUser.address.street}
-            onChange={handleInputChange}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Zipcode"
-            name="address.zipcode"
-            value={newUser.address.zipcode}
-            onChange={handleInputChange}
-            fullWidth
-            margin="normal"
-          />
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <Controller
+              name="firstname"
+              control={control}
+              defaultValue=""
+              rules={{
+                required: "First Name is required",
+                pattern: {
+                  value: /^[A-Za-z]+$/i,
+                  message: "Invalid First Name",
+                },
+              }}
+              render={({ field }) => (
+                <TextField
+                  label="First Name"
+                  fullWidth
+                  margin="normal"
+                  {...field}
+                  error={!!errors.firstname}
+                  helperText={errors.firstname?.message}
+                />
+              )}
+            />
+            <Controller
+              name="lastname"
+              control={control}
+              defaultValue=""
+              rules={{
+                required: "Last Name is required",
+                pattern: {
+                  value: /^[A-Za-z]+$/i,
+                  message: "Invalid Last Name",
+                },
+              }}
+              render={({ field }) => (
+                <TextField
+                  label="Last Name"
+                  fullWidth
+                  margin="normal"
+                  {...field}
+                  error={!!errors.lastname}
+                  helperText={errors.lastname?.message}
+                />
+              )}
+            />
+            <Controller
+              name="username"
+              control={control}
+              defaultValue=""
+              rules={{
+                required: "Username is required",
+                pattern: {
+                  value: /^[A-Za-z0-9_]+$/i,
+                  message: "Invalid Username",
+                },
+              }}
+              render={({ field }) => (
+                <TextField
+                  label="Username"
+                  fullWidth
+                  margin="normal"
+                  {...field}
+                  error={!!errors.username}
+                  helperText={errors.username?.message}
+                />
+              )}
+            />
+            <Controller
+              name="email"
+              control={control}
+              defaultValue=""
+              rules={{
+                required: "Email is required",
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: "Invalid Email",
+                },
+              }}
+              render={({ field }) => (
+                <TextField
+                  label="Email"
+                  fullWidth
+                  margin="normal"
+                  {...field}
+                  error={!!errors.email}
+                  helperText={errors.email?.message}
+                />
+              )}
+            />
+            <Controller
+              name="phone"
+              control={control}
+              defaultValue=""
+              rules={{ required: "Phone is required", minLength: 10 }}
+              render={({ field }) => (
+                <TextField
+                  label="Phone"
+                  fullWidth
+                  margin="normal"
+                  {...field}
+                  error={!!errors.phone}
+                  helperText={errors.phone?.message}
+                />
+              )}
+            />
+            <Controller
+              name="city"
+              control={control}
+              defaultValue=""
+              rules={{
+                required: "City is required",
+                pattern: {
+                  value: /^[A-Za-z ]+$/i,
+                  message: "Invalid City",
+                },
+              }}
+              render={({ field }) => (
+                <TextField
+                  label="City"
+                  fullWidth
+                  margin="normal"
+                  {...field}
+                  error={!!errors.city}
+                  helperText={errors.city?.message}
+                />
+              )}
+            />
+            <Controller
+              name="street"
+              control={control}
+              defaultValue=""
+              rules={{
+                required: "Street is required",
+                pattern: {
+                  value: /^[A-Za-z]+[ ][A-Za-z]+$/i,
+                  message: "Invalid Street",
+                },
+              }}
+              render={({ field }) => (
+                <TextField
+                  label="Street"
+                  fullWidth
+                  margin="normal"
+                  {...field}
+                  error={!!errors.street}
+                  helperText={errors.street?.message}
+                />
+              )}
+            />
+            <Controller
+              name="zipcode"
+              control={control}
+              defaultValue=""
+              rules={{ required: "Zipcode is required", minLength: 5 }}
+              render={({ field }) => (
+                <TextField
+                  label="Zipcode"
+                  fullWidth
+                  margin="normal"
+                  {...field}
+                  error={!!errors.zipcode}
+                  helperText={errors.zipcode?.message}
+                />
+              )}
+            />
+            <DialogActions>
+              <Button onClick={handleCloseDialog} disabled={loading}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? <CircularProgress size={20} /> : "Submit"}
+              </Button>
+            </DialogActions>
+          </form>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={loading}>
-            Cancel
-          </Button>
-          {dialogMode === "add" ? (
-            <Button onClick={handleAddUser} disabled={loading}>
-              {loading ? <CircularProgress size={20} /> : "Add"}
-            </Button>
-          ) : (
-            <Button onClick={handleUpdateUser} disabled={loading}>
-              {loading ? <CircularProgress size={20} /> : "Update"}
-            </Button>
-          )}
-        </DialogActions>
       </Dialog>
     </>
   );

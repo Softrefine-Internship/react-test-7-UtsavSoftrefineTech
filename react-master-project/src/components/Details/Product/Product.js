@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
@@ -20,21 +21,21 @@ const Product = ({ productData }) => {
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState(""); // "add", "update"
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [newProduct, setNewProduct] = useState({
-    title: "",
-    price: 0,
-    description: "",
-    image: "",
-    category: "",
-  });
   const [loading, setLoading] = useState(false);
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm();
 
   const handleOpenDialog = (mode, product) => {
     setDialogMode(mode);
     setSelectedProduct(product);
 
     if (mode === "update") {
-      setNewProduct({
+      reset({
         title: product.title,
         price: product.price,
         description: product.description,
@@ -47,7 +48,7 @@ const Product = ({ productData }) => {
   };
 
   const handleCloseDialog = () => {
-    setNewProduct({
+    reset({
       title: "",
       price: 0,
       description: "",
@@ -59,7 +60,7 @@ const Product = ({ productData }) => {
     setDialogOpen(false);
   };
 
-  const handleAddProduct = () => {
+  const handleAddProduct = (data) => {
     setLoading(true);
 
     fetch(API_URL, {
@@ -67,7 +68,7 @@ const Product = ({ productData }) => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(newProduct),
+      body: JSON.stringify(data),
     })
       .then((res) => res.json())
       .then((json) => {
@@ -82,7 +83,7 @@ const Product = ({ productData }) => {
       });
   };
 
-  const handleUpdateProduct = () => {
+  const handleUpdateProduct = (data) => {
     setLoading(true);
 
     fetch(`${API_URL}/${selectedProduct.id}`, {
@@ -90,7 +91,7 @@ const Product = ({ productData }) => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(newProduct),
+      body: JSON.stringify(data),
     })
       .then((res) => res.json())
       .then((json) => {
@@ -103,6 +104,14 @@ const Product = ({ productData }) => {
         setLoading(false);
         handleCloseDialog();
       });
+  };
+
+  const onSubmit = (data) => {
+    if (dialogMode === "add") {
+      handleAddProduct(data);
+    } else if (dialogMode === "update") {
+      handleUpdateProduct(data);
+    }
   };
 
   const handleDeleteProduct = (id) => {
@@ -123,14 +132,6 @@ const Product = ({ productData }) => {
         handleCloseDialog();
         alert(`Product ${id} is successfully deleted!`);
       });
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewProduct((prevProduct) => ({
-      ...prevProduct,
-      [name]: value,
-    }));
   };
 
   const columnDefs = [
@@ -196,68 +197,135 @@ const Product = ({ productData }) => {
           {dialogMode === "add" ? "Add New Product" : "Update Product"}
         </DialogTitle>
         <DialogContent>
-          <TextField
-            label="Title"
-            name="title"
-            value={newProduct.title}
-            onChange={handleInputChange}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Price"
-            name="price"
-            type="number"
-            value={newProduct.price}
-            onChange={handleInputChange}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Description"
-            name="description"
-            value={newProduct.description}
-            onChange={handleInputChange}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Image URL"
-            name="image"
-            value={newProduct.image}
-            onChange={handleInputChange}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Category"
-            name="category"
-            value={newProduct.category}
-            onChange={handleInputChange}
-            fullWidth
-            margin="normal"
-          />
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <Controller
+              name="title"
+              control={control}
+              defaultValue=""
+              rules={{
+                required: "Title is required",
+                pattern: {
+                  value: /^[A-Za-z0-9 &,.'-]+$/i,
+                  message:
+                    "Title must be alphanumeric characters, comma, apostrophe, period, and hyphen only",
+                },
+              }}
+              render={({ field }) => (
+                <TextField
+                  label="Title"
+                  fullWidth
+                  margin="normal"
+                  {...field}
+                  error={!!errors.title}
+                  helperText={errors.title?.message}
+                />
+              )}
+            />
+            <Controller
+              name="price"
+              control={control}
+              defaultValue={0}
+              rules={{
+                required: "Price is required",
+                pattern: {
+                  value: /^[0-9]+$/i,
+                  message: "Price must be number only",
+                },
+              }}
+              render={({ field }) => (
+                <TextField
+                  label="Price"
+                  type="number"
+                  fullWidth
+                  margin="normal"
+                  {...field}
+                  error={!!errors.price}
+                  helperText={errors.price?.message}
+                />
+              )}
+            />
+            <Controller
+              name="description"
+              control={control}
+              defaultValue=""
+              rules={{
+                required: "Description is required",
+                pattern: {
+                  value: /^[A-Za-z0-9 &,.'()-]+$/i,
+                  message:
+                    "Description must be alphanumeric characters, comma, apostrophe, period, hyphen, and parentheses only",
+                },
+              }}
+              render={({ field }) => (
+                <TextField
+                  label="Description"
+                  fullWidth
+                  margin="normal"
+                  {...field}
+                  error={!!errors.description}
+                  helperText={errors.description?.message}
+                />
+              )}
+            />
+            <Controller
+              name="image"
+              control={control}
+              defaultValue=""
+              rules={{
+                required: "Image is required",
+                pattern: {
+                  value: /^(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|gif|png)$/,
+                  message: "Image must be a valid URL",
+                },
+              }}
+              render={({ field }) => (
+                <TextField
+                  label="Image"
+                  fullWidth
+                  margin="normal"
+                  {...field}
+                  error={!!errors.image}
+                  helperText={errors.image?.message}
+                />
+              )}
+            />
+
+            <Controller
+              name="category"
+              control={control}
+              defaultValue=""
+              rules={{
+                required: "Category is required",
+                pattern: {
+                  value: /^[A-Za-z0-9 ,.'()-]+$/i,
+                  message:
+                    "Category must be alphanumeric characters, comma, apostrophe, period, hyphen, and parentheses only",
+                },
+              }}
+              render={({ field }) => (
+                <TextField
+                  label="Category"
+                  fullWidth
+                  margin="normal"
+                  {...field}
+                  error={!!errors.category}
+                  helperText={errors.category?.message}
+                />
+              )}
+            />
+            <DialogActions>
+              <Button onClick={handleCloseDialog} disabled={loading}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? <CircularProgress size={20} /> : "Submit"}
+              </Button>
+            </DialogActions>
+          </form>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={loading}>
-            Cancel
-          </Button>
-          {dialogMode === "add" ? (
-            <Button onClick={handleAddProduct} disabled={loading}>
-              {loading ? <CircularProgress size={20} /> : "Add"}
-            </Button>
-          ) : (
-            <Button onClick={handleUpdateProduct} disabled={loading}>
-              {loading ? <CircularProgress size={20} /> : "Update"}
-            </Button>
-          )}
-        </DialogActions>
       </Dialog>
 
-      <div
-        className="ag-theme-alpine"
-        style={{ height: "500px", width: "100%" }}
-      >
+      <div className="ag-theme-alpine" style={{ height: "500", width: "100%" }}>
         <AgGridReact
           columnDefs={columnDefs}
           rowData={productData}
