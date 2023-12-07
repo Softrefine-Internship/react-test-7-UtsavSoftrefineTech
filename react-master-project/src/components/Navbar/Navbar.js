@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   AppBar,
   Toolbar,
@@ -17,6 +17,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signOut,
+  onAuthStateChanged,
 } from "firebase/auth";
 import { collection, addDoc, setDoc, doc } from "firebase/firestore";
 
@@ -28,12 +29,23 @@ const Navbar = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(!!auth.currentUser);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsLoggedIn(!!user);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const handleOpenLoginDialog = () => {
     setOpenLogin(true);
     setError(null); // Clear any previous errors
   };
+
   const handleOpenSignUpDialog = () => {
     setOpenSignUp(true);
     setError(null); // Clear any previous errors
@@ -59,16 +71,6 @@ const Navbar = () => {
 
       // Fetch user data after sign-in
       const user = auth.currentUser;
-
-      // Store user data in Firestore
-      if (user) {
-        const usersCollection = collection(db, "users");
-        await addDoc(usersCollection, {
-          uid: user.uid,
-          email: user.email,
-          password: user.password,
-        });
-      }
 
       // Update login state
       setIsLoggedIn(true);
@@ -142,7 +144,6 @@ const Navbar = () => {
       setLoading(true);
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      console.log("User signed in with Google");
       handleCloseDialog();
     } catch (error) {
       setError(error.message);
@@ -164,12 +165,7 @@ const Navbar = () => {
           </Typography>
           <div>
             {isLoggedIn ? (
-              <Button
-                variant="contained"
-                color="error"
-                sx={{ mr: 2 }}
-                onClick={handleLogout}
-              >
+              <Button variant="contained" color="error" onClick={handleLogout}>
                 Logout
               </Button>
             ) : (
