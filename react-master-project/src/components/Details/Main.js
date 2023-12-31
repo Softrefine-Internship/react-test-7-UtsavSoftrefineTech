@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import Cart from "./Cart/Cart";
 import Product from "./Product/Product";
 import User from "./Users/Users";
@@ -21,10 +22,10 @@ const Main = ({ selectedMenu }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(
+        const response = await axios.get(
           `https://fakestoreapi.com/${selectedMenu}`
         );
-        const data = await response.json();
+        const data = response.data;
         setData(data);
       } catch (error) {
         console.error("Error fetching data:", error);

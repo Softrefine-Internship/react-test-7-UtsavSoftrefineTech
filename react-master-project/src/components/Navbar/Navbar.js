@@ -19,7 +19,7 @@ import {
   signOut,
   onAuthStateChanged,
 } from "firebase/auth";
-import { collection, addDoc, setDoc, doc } from "firebase/firestore";
+import { collection, setDoc, doc } from "firebase/firestore";
 
 const Navbar = () => {
   const [openLogin, setOpenLogin] = useState(false);

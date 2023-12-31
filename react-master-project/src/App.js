@@ -3,6 +3,8 @@ import { CssBaseline, Box } from "@mui/material";
 import Navbar from "./components/Navbar/Navbar";
 import Sidebar from "./components/Sidebar/Sidebar";
 import Main from "./components/Details/Main";
+import { Provider } from "react-redux";
+import store from "./store/store";
 
 function App() {
   const [selectedMenu, setSelectedMenu] = useState("products");
@@ -12,7 +14,7 @@ function App() {
   };
 
   return (
-    <>
+    <Provider store={store}>
       <div style={{ position: "relative" }}>
         <CssBaseline />
         <Navbar />
@@ -23,7 +25,7 @@ function App() {
           </Box>
         </Box>
       </div>
-    </>
+    </Provider>
   );
 }
 

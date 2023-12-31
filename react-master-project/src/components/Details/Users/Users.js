@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "axios";
 import { useForm, Controller } from "react-hook-form";
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-community/styles/ag-grid.css";
@@ -69,16 +70,14 @@ const User = ({ userData }) => {
   const handleAddUser = (data) => {
     setLoading(true);
 
-    fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        console.log(json);
+    axios
+      .post(API_URL, data, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then((response) => {
+        console.log(response.data);
       })
       .catch((error) => {
         console.error("Error adding user:", error);
@@ -92,16 +91,14 @@ const User = ({ userData }) => {
   const handleUpdateUser = (data) => {
     setLoading(true);
 
-    fetch(`${API_URL}/${selectedUser.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        console.log(json);
+    axios
+      .put(`${API_URL}/${selectedUser.id}`, data, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then((response) => {
+        console.log(response.data);
       })
       .catch((error) => {
         console.error("Error updating user:", error);
@@ -123,12 +120,10 @@ const User = ({ userData }) => {
   const handleDeleteUser = (id) => {
     setLoading(true);
 
-    fetch(`${API_URL}/${id}`, {
-      method: "DELETE",
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        console.log(json);
+    axios
+      .delete(`${API_URL}/${id}`)
+      .then((response) => {
+        console.log(response.data);
       })
       .catch((error) => {
         console.error("Error deleting user:", error);

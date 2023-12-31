@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "axios";
 import { useForm, Controller } from "react-hook-form";
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-community/styles/ag-grid.css";
@@ -63,16 +64,14 @@ const Product = ({ productData }) => {
   const handleAddProduct = (data) => {
     setLoading(true);
 
-    fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        console.log(json);
+    axios
+      .post(API_URL, data, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then((response) => {
+        console.log(response.data);
       })
       .catch((error) => {
         console.error("Error adding product:", error);
@@ -86,16 +85,14 @@ const Product = ({ productData }) => {
   const handleUpdateProduct = (data) => {
     setLoading(true);
 
-    fetch(`${API_URL}/${selectedProduct.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        console.log(json);
+    axios
+      .put(`${API_URL}/${selectedProduct.id}`, data, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then((response) => {
+        console.log(response.data);
       })
       .catch((error) => {
         console.error("Error updating product:", error);
@@ -117,12 +114,10 @@ const Product = ({ productData }) => {
   const handleDeleteProduct = (id) => {
     setLoading(true);
 
-    fetch(`${API_URL}/${id}`, {
-      method: "DELETE",
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        console.log(json);
+    axios
+      .delete(`${API_URL}/${id}`)
+      .then((response) => {
+        console.log(response.data);
       })
       .catch((error) => {
         console.error("Error deleting product:", error);
@@ -325,7 +320,10 @@ const Product = ({ productData }) => {
         </DialogContent>
       </Dialog>
 
-      <div className="ag-theme-alpine" style={{ height: "500", width: "100%" }}>
+      <div
+        className="ag-theme-alpine"
+        style={{ height: "500px", width: "100%" }}
+      >
         <AgGridReact
           columnDefs={columnDefs}
           rowData={productData}

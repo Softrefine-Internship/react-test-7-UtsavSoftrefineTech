@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "axios";
 import {
   Paper,
   Typography,
@@ -13,6 +14,7 @@ import {
   TextField,
   DialogActions,
 } from "@mui/material";
+import "./Cart.css";
 
 const API_URL = "https://fakestoreapi.com/carts";
 
@@ -56,16 +58,14 @@ const Cart = ({ cartData }) => {
   };
 
   const handleAddCart = () => {
-    fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(newCart),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        console.log(json);
+    axios
+      .post(API_URL, newCart, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then((response) => {
+        console.log(response.data);
         // Handle success, e.g., update state or re-fetch data
       })
       .catch((error) => {
@@ -77,16 +77,14 @@ const Cart = ({ cartData }) => {
   };
 
   const handleUpdateCart = () => {
-    fetch(`${API_URL}/${selectedCart.id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(newCart),
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        console.log(json);
+    axios
+      .put(`${API_URL}/${selectedCart.id}`, newCart, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then((response) => {
+        console.log(response.data);
         // Handle success, e.g., update state or re-fetch data
       })
       .catch((error) => {
@@ -98,12 +96,10 @@ const Cart = ({ cartData }) => {
   };
 
   const handleDeleteCart = (id) => {
-    fetch(`${API_URL}/${id}`, {
-      method: "DELETE",
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        console.log(json);
+    axios
+      .delete(`${API_URL}/${id}`)
+      .then((response) => {
+        console.log(response.data);
         // Handle success, e.g., update state or re-fetch data
       })
       .catch((error) => {
@@ -219,14 +215,7 @@ const Cart = ({ cartData }) => {
         </DialogActions>
       </Dialog>
 
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          overflowY: "auto",
-          maxHeight: "520px",
-        }}
-      >
+      <div className="custom-scroll">
         {cartData &&
           cartData.length > 0 &&
           cartData.map((cartItem) => (
