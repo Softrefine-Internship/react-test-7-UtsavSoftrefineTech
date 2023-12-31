@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { useDispatch } from "react-redux";
 import {
   Paper,
   Typography,
@@ -15,13 +15,21 @@ import {
   DialogActions,
 } from "@mui/material";
 import "./Cart.css";
-
-const API_URL = "https://fakestoreapi.com/carts";
+import {
+  addCart,
+  updateCart,
+  deleteCart,
+} from "../../../store/Slices/cartSlice";
+import { CircularProgress } from "@mui/material";
 
 const Cart = ({ cartData }) => {
+  const dispatch = useDispatch();
+
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState(""); // "add", "update"
   const [selectedCart, setSelectedCart] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   const [newCart, setNewCart] = useState({
     userId: "",
     date: "",
@@ -58,57 +66,41 @@ const Cart = ({ cartData }) => {
   };
 
   const handleAddCart = () => {
-    axios
-      .post(API_URL, newCart, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((response) => {
-        console.log(response.data);
-        // Handle success, e.g., update state or re-fetch data
+    setLoading(true);
+    dispatch(addCart(newCart))
+      .then(() => {
+        setLoading(false);
+        handleCloseDialog();
       })
       .catch((error) => {
         console.error("Error adding cart:", error);
-      })
-      .finally(() => {
-        handleCloseDialog();
+        setLoading(false);
       });
   };
 
   const handleUpdateCart = () => {
-    axios
-      .put(`${API_URL}/${selectedCart.id}`, newCart, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((response) => {
-        console.log(response.data);
-        // Handle success, e.g., update state or re-fetch data
+    setLoading(true);
+    dispatch(updateCart({ id: selectedCart.id, data: newCart }))
+      .then(() => {
+        setLoading(false);
+        handleCloseDialog();
       })
       .catch((error) => {
         console.error("Error updating cart:", error);
-      })
-      .finally(() => {
-        handleCloseDialog();
+        setLoading(false);
       });
   };
 
   const handleDeleteCart = (id) => {
-    axios
-      .delete(`${API_URL}/${id}`)
-      .then((response) => {
-        console.log(response.data);
-        // Handle success, e.g., update state or re-fetch data
+    setLoading(true);
+    dispatch(deleteCart(id))
+      .then(() => {
+        setLoading(false);
+        alert("Cart deleted successfully!");
       })
       .catch((error) => {
         console.error("Error deleting cart:", error);
-      })
-      .finally(() => {
-        handleCloseDialog();
-        // Handle success, e.g., update state or re-fetch data
-        alert("Cart deleted successfully!");
+        setLoading(false);
       });
   };
 
@@ -206,11 +198,17 @@ const Cart = ({ cartData }) => {
           <Button onClick={handleAddProductField}>Add Product</Button>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleCloseDialog} disabled={loading}>
+            Cancel
+          </Button>
           {dialogMode === "add" ? (
-            <Button onClick={handleAddCart}>Add</Button>
+            <Button onClick={handleAddCart} disabled={loading}>
+              {loading ? <CircularProgress size={20} /> : "Add"}
+            </Button>
           ) : (
-            <Button onClick={handleUpdateCart}>Update</Button>
+            <Button onClick={handleUpdateCart} disabled={loading}>
+              {loading ? <CircularProgress size={20} /> : "Update"}
+            </Button>
           )}
         </DialogActions>
       </Dialog>

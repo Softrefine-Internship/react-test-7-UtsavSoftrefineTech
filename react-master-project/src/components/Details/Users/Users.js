@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { useDispatch } from "react-redux";
 import { useForm, Controller } from "react-hook-form";
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-community/styles/ag-grid.css";
@@ -15,10 +15,15 @@ import {
   Box,
   CircularProgress,
 } from "@mui/material";
-
-const API_URL = "https://jsonplaceholder.typicode.com/users";
+import {
+  addUser,
+  updateUser,
+  deleteUser,
+} from "../../../store/Slices/userSlice";
 
 const User = ({ userData }) => {
+  const dispatch = useDispatch();
+
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState(""); // "add", "update"
   const [selectedUser, setSelectedUser] = useState(null);
@@ -69,43 +74,27 @@ const User = ({ userData }) => {
 
   const handleAddUser = (data) => {
     setLoading(true);
-
-    axios
-      .post(API_URL, data, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((response) => {
-        console.log(response.data);
+    dispatch(addUser(data))
+      .then(() => {
+        setLoading(false);
+        handleCloseDialog();
       })
       .catch((error) => {
         console.error("Error adding user:", error);
-      })
-      .finally(() => {
         setLoading(false);
-        handleCloseDialog();
       });
   };
 
   const handleUpdateUser = (data) => {
     setLoading(true);
-
-    axios
-      .put(`${API_URL}/${selectedUser.id}`, data, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((response) => {
-        console.log(response.data);
+    dispatch(updateUser({ id: selectedUser.id, data }))
+      .then(() => {
+        setLoading(false);
+        handleCloseDialog();
       })
       .catch((error) => {
         console.error("Error updating user:", error);
-      })
-      .finally(() => {
         setLoading(false);
-        handleCloseDialog();
       });
   };
 
@@ -119,19 +108,14 @@ const User = ({ userData }) => {
 
   const handleDeleteUser = (id) => {
     setLoading(true);
-
-    axios
-      .delete(`${API_URL}/${id}`)
-      .then((response) => {
-        console.log(response.data);
+    dispatch(deleteUser(id))
+      .then(() => {
+        setLoading(false);
+        alert(`User ${id} is successfully deleted!`);
       })
       .catch((error) => {
         console.error("Error deleting user:", error);
-      })
-      .finally(() => {
         setLoading(false);
-        handleCloseDialog();
-        alert(`User ${id} is successfully deleted!`);
       });
   };
 

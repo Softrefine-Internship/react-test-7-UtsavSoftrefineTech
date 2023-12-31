@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { useDispatch } from "react-redux";
 import { useForm, Controller } from "react-hook-form";
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-community/styles/ag-grid.css";
@@ -15,10 +15,15 @@ import {
   Box,
   CircularProgress,
 } from "@mui/material";
-
-const API_URL = "https://fakestoreapi.com/products";
+import {
+  addProduct,
+  updateProduct,
+  deleteProduct,
+} from "../../../store/Slices/productSlice";
 
 const Product = ({ productData }) => {
+  const dispatch = useDispatch();
+
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState(""); // "add", "update"
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -63,43 +68,40 @@ const Product = ({ productData }) => {
 
   const handleAddProduct = (data) => {
     setLoading(true);
-
-    axios
-      .post(API_URL, data, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((response) => {
-        console.log(response.data);
+    dispatch(addProduct(data))
+      .then(() => {
+        setLoading(false);
+        handleCloseDialog();
       })
       .catch((error) => {
         console.error("Error adding product:", error);
-      })
-      .finally(() => {
         setLoading(false);
-        handleCloseDialog();
       });
   };
 
   const handleUpdateProduct = (data) => {
     setLoading(true);
-
-    axios
-      .put(`${API_URL}/${selectedProduct.id}`, data, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((response) => {
-        console.log(response.data);
+    dispatch(updateProduct({ id: selectedProduct.id, data }))
+      .then(() => {
+        setLoading(false);
+        handleCloseDialog();
       })
       .catch((error) => {
         console.error("Error updating product:", error);
-      })
-      .finally(() => {
         setLoading(false);
-        handleCloseDialog();
+      });
+  };
+
+  const handleDeleteProduct = (id) => {
+    setLoading(true);
+    dispatch(deleteProduct(id))
+      .then(() => {
+        setLoading(false);
+        alert(`Product ${id} is scheduled for deletion!`);
+      })
+      .catch((error) => {
+        console.error("Error deleting product:", error);
+        setLoading(false);
       });
   };
 
@@ -109,24 +111,6 @@ const Product = ({ productData }) => {
     } else if (dialogMode === "update") {
       handleUpdateProduct(data);
     }
-  };
-
-  const handleDeleteProduct = (id) => {
-    setLoading(true);
-
-    axios
-      .delete(`${API_URL}/${id}`)
-      .then((response) => {
-        console.log(response.data);
-      })
-      .catch((error) => {
-        console.error("Error deleting product:", error);
-      })
-      .finally(() => {
-        setLoading(false);
-        handleCloseDialog();
-        alert(`Product ${id} is successfully deleted!`);
-      });
   };
 
   const columnDefs = [

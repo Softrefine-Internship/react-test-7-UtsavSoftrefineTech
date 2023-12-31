@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
   AppBar,
   Toolbar,
@@ -20,6 +21,12 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 import { collection, setDoc, doc } from "firebase/firestore";
+import {
+  setUser,
+  setLoading,
+  setError,
+  clearError,
+} from "../../store/Slices/authSlice";
 
 const Navbar = () => {
   const [openLogin, setOpenLogin] = useState(false);
@@ -27,13 +34,15 @@ const Navbar = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const dispatch = useDispatch();
+  const { isLoading, error, user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsLoggedIn(!!user);
+      if (user) {
+        dispatch(setUser(user));
+      }
     });
 
     return () => {
@@ -43,12 +52,12 @@ const Navbar = () => {
 
   const handleOpenLoginDialog = () => {
     setOpenLogin(true);
-    setError(null); // Clear any previous errors
+    dispatch(clearError());
   };
 
   const handleOpenSignUpDialog = () => {
     setOpenSignUp(true);
-    setError(null); // Clear any previous errors
+    dispatch(clearError());
   };
 
   const handleCloseDialog = () => {
@@ -57,7 +66,7 @@ const Navbar = () => {
     setEmail("");
     setPassword("");
     setConfirmPassword("");
-    setError(null);
+    dispatch(clearError());
   };
 
   const handleEmailChange = (e) => setEmail(e.target.value);
@@ -66,27 +75,26 @@ const Navbar = () => {
 
   const handleSignIn = async () => {
     try {
-      setLoading(true);
+      dispatch(setLoading(true));
       await signInWithEmailAndPassword(auth, email, password);
 
       // Fetch user data after sign-in
-      const user = auth.currentUser;
+      const currentUser = auth.currentUser;
 
       // Update login state
-      setIsLoggedIn(true);
-      console.log("User logged in:", user);
+      dispatch(setUser(currentUser));
 
       handleCloseDialog();
     } catch (error) {
-      setError(error.message);
+      dispatch(setError(error.message));
     } finally {
-      setLoading(false);
+      dispatch(setLoading(false));
     }
   };
 
   const handleSignUp = async () => {
     try {
-      setLoading(true);
+      dispatch(setLoading(true));
       // Ensure that password is not empty and matches confirm password
       if (!password || password !== confirmPassword) {
         throw new Error("Passwords do not match");
@@ -99,56 +107,54 @@ const Navbar = () => {
       );
 
       // Fetch user data after sign-up
-      const user = userCredential.user;
+      const newUser = userCredential.user;
 
       // Store user data in Firestore user profiles collection
-      if (user) {
+      if (newUser) {
         const usersCollection = collection(db, "user_profiles");
 
         // Use UID as the document ID
-        await setDoc(doc(usersCollection, user.uid), {
-          email: user.email,
+        await setDoc(doc(usersCollection, newUser.uid), {
+          email: newUser.email,
           password: password,
         });
       }
 
       // Update login state
-      setIsLoggedIn(true);
-      console.log("User signed up:", user);
+      dispatch(setUser(newUser));
 
       handleCloseDialog();
     } catch (error) {
-      setError(error.message);
+      dispatch(setError(error.message));
     } finally {
-      setLoading(false);
+      dispatch(setLoading(false));
     }
   };
 
   const handleLogout = async () => {
     try {
-      setLoading(true);
+      dispatch(setLoading(true));
       await signOut(auth);
 
       // Update login state
-      setIsLoggedIn(false);
-      console.log("User logged out");
+      dispatch(setUser(null));
     } catch (error) {
       console.error("Error signing out:", error.message);
     } finally {
-      setLoading(false);
+      dispatch(setLoading(false));
     }
   };
 
   const handleSignInWithGoogle = async () => {
     try {
-      setLoading(true);
+      dispatch(setLoading(true));
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       handleCloseDialog();
     } catch (error) {
-      setError(error.message);
+      dispatch(setError(error.message));
     } finally {
-      setLoading(false);
+      dispatch(setLoading(false));
     }
   };
 
@@ -164,7 +170,7 @@ const Navbar = () => {
             React Master Project
           </Typography>
           <div>
-            {isLoggedIn ? (
+            {user ? (
               <Button variant="contained" color="error" onClick={handleLogout}>
                 Logout
               </Button>
@@ -221,10 +227,10 @@ const Navbar = () => {
           </Button>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={loading}>
+          <Button onClick={handleCloseDialog} disabled={isLoading}>
             Cancel
           </Button>
-          <Button onClick={handleSignIn} disabled={loading}>
+          <Button onClick={handleSignIn} disabled={isLoading}>
             Sign In
           </Button>
         </DialogActions>
@@ -273,12 +279,12 @@ const Navbar = () => {
           </Button>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={loading}>
+          <Button onClick={handleCloseDialog} disabled={isLoading}>
             Cancel
           </Button>
           <Button
             onClick={handleSignUp}
-            disabled={loading || password !== confirmPassword}
+            disabled={isLoading || password !== confirmPassword}
           >
             Sign Up
           </Button>
